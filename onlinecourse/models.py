@@ -77,6 +77,8 @@ class Lesson(models.Model):
 
 
 # Enrollment model
+# <HINT> Once a user enrolled a class, an enrollment entry should be created between the user and course
+# And we could use the enrollment to track information such as exam submissions
 class Enrollment(models.Model):
     AUDIT = 'audit'
     HONOR = 'honor'
@@ -93,51 +95,27 @@ class Enrollment(models.Model):
     rating = models.FloatField(default=5.0)
 
 
-# Question model
 class Question(models.Model):
-    """
-    Model representing a question in an exam for a course.
-    """
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     content = models.CharField(max_length=200)
     grade = models.IntegerField(default=50)
 
     def __str__(self):
-        return f"Question: {self.content}"
+        return "Question: " + self.content
 
     def is_get_score(self, selected_ids):
-        """
-        Method to calculate if the learner gets the score for the question.
-        Args:
-            selected_ids (list): List of selected choice IDs.
-        Returns:
-            bool: True if all correct choices are selected, False otherwise.
-        """
         all_answers = self.choice_set.filter(is_correct=True).count()
         selected_correct = self.choice_set.filter(is_correct=True, id__in=selected_ids).count()
-        return all_answers == selected_correct
+        if all_answers == selected_correct:
+            return True
+        else:
+            return False
 
-
-# Choice model
 class Choice(models.Model):
-    """
-    Model representing a choice for a question in an exam.
-    """
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     content = models.CharField(max_length=200)
     is_correct = models.BooleanField(default=False)
 
-    def __str__(self):
-        return f"Choice: {self.content} (Correct: {self.is_correct})"
-
-
-# Submission model
 class Submission(models.Model):
-    """
-    Model representing an exam submission.
-    """
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
     choices = models.ManyToManyField(Choice)
-
-    def __str__(self):
-        return f"Submission ID: {self.id}, Enrollment ID: {self.enrollment.id}"
